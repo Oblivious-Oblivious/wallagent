@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Read this file before every task.
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with
+project-specific instructions as needed.
 
-**Working code only. Finish the job. Plausibility is not correctness.**
-
----
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial
+tasks, use judgment.
 
 ## 0. Non-negotiables
 
@@ -17,116 +17,205 @@ These override everything else:
 4. **Touch only what you must.** Every changed line must trace to the user's
    request.
 
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+- If you write 20 lines and it be 5, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes,
+simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it
+work") require constant clarification.
+
 ---
 
-## 1. Before writing code
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer
+rewrites due to overcomplication, and clarifying questions come before
+implementation rather than after mistakes.
 
-- State your plan before editing. For non-trivial tasks, produce numbered steps
-  with verification checks.
-- Read files you'll touch and files that call them. Use subagents for
-  exploration to keep main context clean.
-- Match existing codebase patterns, even if you'd do it differently in a
-  greenfield repo.
-- Surface assumptions explicitly. Don't bury them in the implementation.
-
----
-
-## 2. Writing code: minimum viable solution
-
-- No features, abstractions, configurability, or error handling beyond what
-  was asked.
-- If 200 lines could be 50, rewrite before showing.
-- Stop if you catch yourself adding "for future extensibility."
-- Bias toward deleting code over adding it.
-
----
-
-## 3. Surgical changes
-
-- Don't "improve" adjacent code, comments, formatting, or imports not part of
-  the task.
-- Don't refactor working code just because you're in the file.
-- Don't delete pre-existing dead code unless asked (mention it if you notice it).
-- Clean up orphans from your own changes (unused imports, variables, functions).
-- Match project style exactly: indentation, quotes, naming, file layout.
-
----
-
-## 4. Verification
-
-- Never report "done" from a plausible-looking diff alone.
-- Debug root causes, not symptoms. Suppressing ≠ fixing.
-- Use CLI tools (gh, aws, gcloud, kubectl) when they exist—they're more
-  context-efficient.
-- Read entire stack traces. Half-read traces produce wrong fixes.
-
----
-
-## 5. Session hygiene
-
-- Context is the constraint. Fresh sessions beat long ones with accumulated
-  failures.
-- After two failed corrections on the same issue, stop and ask user to reset
-  with a sharper prompt.
-- Use subagents for exploration tasks that'd pollute main context.
-- Never commit anything by yourself.
-
----
-
-## 6. Communication style
-
-- Direct, not diplomatic. "This won't scale because X" beats "Interesting
-  approach, but..."
-- Concise by default. 2-3 short paragraphs unless user asks for depth.
-- Clear answers when possible; when not, say so and give tradeoffs.
-- No excessive bullets, unprompted headers, or emoji. Prose > structure for
-  short answers.
-
----
-
-## 7. Project context
+## 5. Project Context
 
 ### Stack
 
-- C (configured as **C89** in `em.json` under `compile-flags`).
-- **Clang** as the C compiler (`compile-flags.cc`).
-- **Emeralds** package manager and build driver: CLI is **`em`** (or `emeralds` depending on install). Project manifest is **`em.json`** (not `em.yml`; treat yml mentions elsewhere as stale unless compatibility work).
-- Tests use **cSpec** (listed under `dev-dependencies` in `em.json`; headers linked from `libs/cSpec/...` after install).
+- C project managed by Emeralds (`em` CLI).
+- Compiler config comes from `em.json`.
 
 ### Commands
 
-Typical workflow uses `em` from the repository root (see `em help` for the full command list).
+- `em help` - get information about all commands. use this to navigate.
 
-- Install deps: `em install` (runtime deps); `em install dev` or `em install all` when you need dev-dependencies such as cSpec.
-- Build release: `em build app release` or `em build lib release` (artifact layout follows Emeralds conventions, e.g. under `export/`).
-- Build debug: `em build app debug` or `em build lib debug`.
-- Test: `em test` (runs the project test script; this repo’s specs live under `spec/` and include cSpec).
-- Run binary: `em run`.
-- Clean build output: `em clean`.
-- Avoid running `em install` / `em reinstall` / `em license` casually in automation—they fetch from the network and change `libs/` and possibly license headers; only run when intentionally refreshing dependencies or license blocks.
+- Examples:
+  - `em build [app | lib] [debug | release]` — build the project.
+  - `em test` — run tests.
+  - `em install` — fetch dependencies into `libs/`.
+  - `em add <name>` — scaffold a new module (source + header).
 
 ### Layout
 
-- Manifest: `em.json` (name, version, `dependencies`, `dev-dependencies`, `compile-flags`, `license`, etc.).
-- Library/API headers and sources: `src/` (e.g. `src/wallagent.h`, nested modules like `src/z/`).
-- Tests: `spec/` (e.g. `spec/wallagent.spec.c`, module specs such as `spec/z/*.spec.h`).
-- Installed dependencies: `libs/` (flattened tree produced by `em install`; **gitignored**—do not commit).
+- `src/` — source modules (`.c` and `.h` files).
+- `spec/` — cSpec test files.
+- `libs/` — installed dependencies (gitignored).
+- `export/` — dependency public headers.
+- `em.json` — project configuration (single source of truth).
 
-There is no top-level `Makefile` or `shard.yml` in this repo; build orchestration is through **`em`** and **`em.json`**.
+### Config Format
 
-### Conventions
+- Compile flags per platform: `compile-flags.darwin` / `linux` / `win32`.
+- Each platform has `debug` and `release` profiles.
+- Production dependencies: `dependencies`.
+- Development dependencies: `dev-dependencies`.
 
-- Match **`em.json`** compiler settings: debug vs release flags, `-std=c89`, sanitizers and warning flags as configured there.
-- Follow **`.clang-format`** and **`.clangd`** for formatting and IDE diagnostics where applicable.
-- **JSON field names** in `em.json` use hyphens in the file (e.g. `dev-dependencies`, `compile-flags`); Emeralds maps these to its internal model—keep the on-disk names consistent with Emeralds expectations.
+### Testing
 
-### Syntax
+- Framework: cSpec.
+- Spec files live in `spec/`.
+- Include path: `libs/cSpec/export/cSpec.h`.
+- Suite runner pattern: `cspec_run_suite(...)`.
 
-- Source is **C89** unless `em.json` `compile-flags` is deliberately changed.
-- Prefer existing include patterns and module layout (`src/z/`, `spec/z/` pairs) when adding files.
+### Code Style
 
-### Forbidden
+- Favor C89 compatibility by default; only use newer C features when
+  explicitly told to.
+- `.clang-format` is authoritative. Don't override it.
+- `.clangd` provides editor intelligence.
 
-- Committing from an agent (human commits only).
-- Hand-editing **`libs/`** (generated by `em install`); change dependencies via `em.json` and reinstall.
-- Broad drive-by refactors or unrelated formatting sweeps outside the requested task.
+# cSpec — Usage Reference
+
+Single-header, C89, compile-time TDD/BDD unit testing (RSpec-style). No linking,
+no runtime deps — just `#include "libs/cSpec/export/cSpec.h"`.
+
+Convention: one module per `<name>.module.spec.h`, plus one `*.spec.c` runner
+that includes them. Build/run with `em test`.
+
+## Example
+
+```c
+/* stack.module.spec.h */
+#include "../src/cSpec.h"
+
+module(T_stack, {              /* defines void T_stack(void) */
+  before_each(&setup);         /* void(void) ptr, runs around every `it` */
+  after_each(&defer);
+
+  describe("stack", {
+    int x;
+    before({ x = 99; });       /* inlined ONCE here, not per-test */
+
+    it("pops what it pushed", {
+      push(s, x);
+      assert_that_int(pop(s) equals to x);
+    });
+
+    after({ /* one-time teardown */ });
+  });
+})
+
+/* runner.spec.c */
+int main(void) {
+  cspec_run_suite("all", {     /* "all" | "passing" | "failing" | "skipped" */
+    T_stack();                 /* call each module */
+  });
+}
+```
+
+`cspec_run_suite(type, {...})`: all tests run; `type` only filters what prints.
+
+## Structure
+
+- `module(name, {...})` — top-level container; defines callable `name`.
+- `describe("text", {...})` / `context(...)` — groups (aliases); nest freely.
+- `it("text", {...})` — one test; independent; any failed assert fails it.
+
+## Setup & teardown
+
+- `before({...})` / `after({...})` — inlined **once** where written (block-level).
+- `before_each(&fn)` / `after_each(&fn)` — `void fn(void)` run **around every `it`**.
+
+## Assertions
+
+```c
+assert_that(expr);                  /* fail if false; nassert_that = fail if true */
+assert_that(len is 0);              /* sugar: is -> ==,  isnot -> != */
+fail("message");                    /* always fails */
+
+assert_that_int(got equals to 2);   /* typed equality; nassert_that_int negates */
+assert_that_charptr(s equals to ""); /* charptr compares contents */
+assert_that_int_array(got equals to want with array_size 5);
+```
+
+Typed `<type>` suffixes (each has 4 forms: `assert_that_<t>`, `nassert_that_<t>`,
+`..._array`, `nassert..._array`):
+`char`, `unsigned_char`, `short`, `unsigned_short`, `int`, `unsigned_int`,
+`long`, `unsigned_long`, `long_long`, `unsigned_long_long`, `size_t`,
+`ptrdiff_t`, `void_ptr`, `float`, `double`, `long_double`, `charptr`.
+
+Sugar words: `is`=`==`, `isnot`=`!=`, `equals`=`,`, `array_size`=`,`,
+`to`/`with`=nothing. So `assert_that_int(a equals to b)` is `assert_that_int(a, b)`.
+Floats compare within `1E-12`; `void_ptr` compares addresses.
+
+## Skipping
+
+Prefix with `x` to skip (body not run, counts as skipped): `xmodule`,
+`xdescribe`, `xcontext`, `xit`. Shown only under `"all"`/`"skipped"`.
+
+## Gotchas
+
+- **C89**: declare locals at top of each block; no `//` comments.
+- `describe` state persists across `it`s unless reset in `before`.
+- `before`/`after` are one-time, not per-test — use `before_each`/`after_each`.
+- Runner string must be exactly `all`/`passing`/`failing`/`skipped`, else nothing runs.
+- Failures auto-report `__FILE__:__LINE__`.

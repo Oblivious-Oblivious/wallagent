@@ -1,58 +1,65 @@
 {
   "$schema": "https://raw.githubusercontent.com/Oblivious-Oblivious/Emeralds/master/schema/em.schema.json",
+  "author": "atha",
   "name": "wallagent",
   "version": "0.0.1",
   "license": "mit",
   "locignore": {
-    "extensions": [],
-    "directories": []
+    "directories": ["libs"]
+  },
+  "lintignore": {
+    "directories": ["libs"]
   },
   "scripts": {},
   "compile-flags": {
     "darwin": {
-      "cc": "clang",
-      "debug": {
-        "opt": "-O2",
-        "version": "-std=c89",
-        "flags": "-g -fsanitize=address",
-        "warnings": "-Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic"
-      },
-      "release": {
-        "opt": "-O2",
-        "version": "-std=c89",
-        "flags": "",
-        "warnings": ""
-      }
+      "debug": [
+        "clang",
+        "-O2",
+        "-std=c89",
+        "-g",
+        "-fsanitize=address",
+        "-lcurl",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-pedantic-errors",
+        "-Wpedantic"
+      ],
+      "release": ["clang", "-O2", "-std=c89", "-lcurl"]
     },
     "linux": {
-      "cc": "gcc",
-      "debug": {
-        "opt": "-O2",
-        "version": "-std=c89",
-        "flags": "-g",
-        "warnings": "-Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic"
-      },
-      "release": {
-        "opt": "-O3",
-        "version": "",
-        "flags": "",
-        "warnings": ""
-      }
+      "debug": [
+        "gcc",
+        "-O2",
+        "-std=c89",
+        "-g",
+        "-lcurl",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-pedantic-errors",
+        "-Wpedantic"
+      ],
+      "release": ["gcc", "-O2", "-std=c89", "-lcurl"]
     },
     "win32": {
-      "cc": "gcc",
-      "debug": {
-        "opt": "-O2",
-        "version": "-std=c89",
-        "flags": "-g",
-        "warnings": "-Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic"
-      },
-      "release": {
-        "opt": "-O2",
-        "version": "-std=c89",
-        "flags": "",
-        "warnings": ""
-      }
+      "debug": [
+        "gcc",
+        "-O2",
+        "-std=c89",
+        "-g",
+        "-lcurl",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-pedantic-errors",
+        "-Wpedantic"
+      ],
+      "release": ["gcc", "-O2", "-std=c89", "-lcurl"]
     }
   },
   "dependencies": {},
