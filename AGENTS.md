@@ -16,7 +16,7 @@ These override everything else:
    say so.
 4. **Touch only what you must.** Every changed line must trace to the user's
    request.
-5. **NO committing from an agent!! (human commits only).
+5. **NO committing from an agent!!** (human commits only).
 
 ## 1. Think Before Coding
 
@@ -132,9 +132,41 @@ implementation rather than after mistakes.
 - Spec files live in `spec/` and end in `.spec.cr`.
 - Run with `em test` (uses `crystal spec`).
 
-### Running Tests
+### Performance
 
-- `em test` wraps `crystal spec`.
-- `crystal spec` runs everything under `spec/`.
-- `crystal spec spec/foo_spec.cr` runs a single file.
-- `crystal spec -e "pattern"` / `--tag focus` to filter examples.
+Source: https://crystal-lang.org/reference/1.20/guides/performance.html
+
+- Avoid unnecessary heap allocations; they are slower and increase GC pressure.
+- Prefer writing directly to `IO` instead of building intermediate strings.
+  Implement `to_s(io)` rather than `to_s` for custom types.
+- Use string interpolation over manual string concatenation.
+- Use `String.build` for efficient string construction instead of allocating an
+  `IO::Memory` yourself.
+- Avoid repeated temporary objects in hot paths, especially inside loops.
+  Prefer tuples for fixed literal collections, and use iterator methods like
+  `Hash#each_key` instead of allocating arrays via `Hash#keys`.
+- Use `struct` for small immutable value objects when appropriate, but remember
+  structs are passed by value.
+- Be careful with string indexing: Crystal strings are UTF-8, so `str[i]` and
+  `str.size` can be costly. Prefer `each_char`, `each_byte`,
+  `each_codepoint`, or `Char::Reader`.
+- General rule: reduce allocations, stream into buffers/IOs, use Crystal’s
+  iteration APIs, and verify every performance change with profiling.
+
+### Concurrency
+
+## Crystal Concurrency
+
+- Crystal concurrency is based on **fibers** (lightweight user-space tasks),
+  not OS threads.
+- Create concurrent work with `spawn`.
+- Prefer **message passing via `Channel`** over shared mutable state.
+- Fibers communicate using channels (`send` / `receive`) in a CSP-style model
+  similar to Go.
+- Fiber scheduling is cooperative; blocking operations such as I/O, channel
+  operations, and `sleep` yield execution.
+- Use `select` to wait on multiple channel operations.
+- Design concurrent systems as independent fibers communicating through channels.
+- Avoid shared mutable state whenever possible.
+- If shared state is necessary in parallel execution contexts, use
+  synchronization primitives (`Mutex`, atomics, etc.).
