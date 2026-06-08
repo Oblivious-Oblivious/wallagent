@@ -2,6 +2,8 @@
 
 harness harness for harnesses
 
+[![MIT License](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
+
 # What ?
 
 API wrapper for raw LLM APIs or APIs of other harnesses.
@@ -21,10 +23,6 @@ TODO: Write installation instructions here
 ## Usage
 
 TODO: Write usage instructions here
-
-## Development
-
-TODO: Write development instructions here
 
 ## Contributing
 

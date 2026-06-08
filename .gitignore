@@ -1,42 +1,15 @@
-#Prerequisites
-*.d
+/docs/
+/lib/
+/bin/
+/.shards/
+*.dwarf
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+# Linux
+fix_linux
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# MacOS
+.DS_Store
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-# *.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-libs/
+# AI
+.claude
+.opencode

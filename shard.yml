@@ -1,0 +1,22 @@
+name: wallagent
+version: 0.0.1
+
+authors:
+  - atha
+
+targets:
+  wallagent:
+    main: src/wallagent.cr
+  ameba:
+    main: lib/ameba/bin/ameba.cr
+
+crystal: ">= 1.0.0"
+
+license: MIT
+
+dependencies:
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+

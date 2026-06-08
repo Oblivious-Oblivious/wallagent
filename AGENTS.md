@@ -16,6 +16,7 @@ These override everything else:
    say so.
 4. **Touch only what you must.** Every changed line must trace to the user's
    request.
+5. **NO committing from an agent!! (human commits only).
 
 ## 1. Think Before Coding
 
@@ -91,8 +92,9 @@ implementation rather than after mistakes.
 
 ### Stack
 
-- C project managed by Emeralds (`em` CLI).
-- Compiler config comes from `em.json`.
+- Crystal project managed by Emeralds (`em` CLI) on top of Shards.
+- `shard.yml` is the source of truth for targets and dependencies.
+- `em.json` wraps it and delegates to `shards`/`crystal`.
 
 ### Commands
 
@@ -101,121 +103,38 @@ implementation rather than after mistakes.
 - Examples:
   - `em build [app | lib] [debug | release]` — build the project.
   - `em test` — run tests.
-  - `em install` — fetch dependencies into `libs/`.
-  - `em add <name>` — scaffold a new module (source + header).
+  - `em install` — fetch dependencies into `lib/`.
+  - `em add <name>` — scaffold a new module (source + spec).
 
 ### Layout
 
-- `src/` — source modules (`.c` and `.h` files).
-- `spec/` — cSpec test files.
-- `libs/` — installed dependencies (gitignored).
-- `export/` — dependency public headers.
-- `em.json` — project configuration (single source of truth).
-
-### Config Format
-
-- Compile flags per platform: `compile-flags.darwin` / `linux` / `win32`.
-- Each platform has `debug` and `release` profiles.
-- Production dependencies: `dependencies`.
-- Development dependencies: `dev-dependencies`.
-
-### Testing
-
-- Framework: cSpec.
-- Spec files live in `spec/`.
-- Include path: `libs/cSpec/export/cSpec.h`.
-- Suite runner pattern: `cspec_run_suite(...)`.
+- `src/` — source files (`.cr`).
+- `spec/` — spec files (`*.spec.cr`).
+- `lib/` — installed shards (gitignored).
+- `bin/` — compiled binaries (gitignored).
+- `shard.yml` — targets and dependencies.
+- `em.json` — Emeralds wrapper configuration.
 
 ### Code Style
 
-- Favor C89 compatibility by default; only use newer C features when
-  explicitly told to.
-- `.clang-format` is authoritative. Don't override it.
-- `.clangd` provides editor intelligence.
+- Run `em lint` to format and lint documents using ameba.
+- Prefer the standard library over adding dependencies.
+- Keep Crystal code style local: 2-space indent, final newline, LF,
+  trimmed trailing whitespace.
+- Max 80 chars/line. Follow existing script style.
+- Crystal statements end with semicolons. Match surrounding files.
+- Add focused tests for real behavior changes when practical.
+- Single-statement lambdas: `->`; multi: `do...end`.
 
-# cSpec — Usage Reference
+### Testing
 
-Single-header, C89, compile-time TDD/BDD unit testing (RSpec-style). No linking,
-no runtime deps — just `#include "libs/cSpec/export/cSpec.h"`.
+- Framework: Crystal's built-in `spec`.
+- Spec files live in `spec/` and end in `.spec.cr`.
+- Run with `em test` (uses `crystal spec`).
 
-Convention: one module per `<name>.module.spec.h`, plus one `*.spec.c` runner
-that includes them. Build/run with `em test`.
+### Running Tests
 
-## Example
-
-```c
-/* stack.module.spec.h */
-#include "../src/cSpec.h"
-
-module(T_stack, {              /* defines void T_stack(void) */
-  before_each(&setup);         /* void(void) ptr, runs around every `it` */
-  after_each(&defer);
-
-  describe("stack", {
-    int x;
-    before({ x = 99; });       /* inlined ONCE here, not per-test */
-
-    it("pops what it pushed", {
-      push(s, x);
-      assert_that_int(pop(s) equals to x);
-    });
-
-    after({ /* one-time teardown */ });
-  });
-})
-
-/* runner.spec.c */
-int main(void) {
-  cspec_run_suite("all", {     /* "all" | "passing" | "failing" | "skipped" */
-    T_stack();                 /* call each module */
-  });
-}
-```
-
-`cspec_run_suite(type, {...})`: all tests run; `type` only filters what prints.
-
-## Structure
-
-- `module(name, {...})` — top-level container; defines callable `name`.
-- `describe("text", {...})` / `context(...)` — groups (aliases); nest freely.
-- `it("text", {...})` — one test; independent; any failed assert fails it.
-
-## Setup & teardown
-
-- `before({...})` / `after({...})` — inlined **once** where written (block-level).
-- `before_each(&fn)` / `after_each(&fn)` — `void fn(void)` run **around every `it`**.
-
-## Assertions
-
-```c
-assert_that(expr);                  /* fail if false; nassert_that = fail if true */
-assert_that(len is 0);              /* sugar: is -> ==,  isnot -> != */
-fail("message");                    /* always fails */
-
-assert_that_int(got equals to 2);   /* typed equality; nassert_that_int negates */
-assert_that_charptr(s equals to ""); /* charptr compares contents */
-assert_that_int_array(got equals to want with array_size 5);
-```
-
-Typed `<type>` suffixes (each has 4 forms: `assert_that_<t>`, `nassert_that_<t>`,
-`..._array`, `nassert..._array`):
-`char`, `unsigned_char`, `short`, `unsigned_short`, `int`, `unsigned_int`,
-`long`, `unsigned_long`, `long_long`, `unsigned_long_long`, `size_t`,
-`ptrdiff_t`, `void_ptr`, `float`, `double`, `long_double`, `charptr`.
-
-Sugar words: `is`=`==`, `isnot`=`!=`, `equals`=`,`, `array_size`=`,`,
-`to`/`with`=nothing. So `assert_that_int(a equals to b)` is `assert_that_int(a, b)`.
-Floats compare within `1E-12`; `void_ptr` compares addresses.
-
-## Skipping
-
-Prefix with `x` to skip (body not run, counts as skipped): `xmodule`,
-`xdescribe`, `xcontext`, `xit`. Shown only under `"all"`/`"skipped"`.
-
-## Gotchas
-
-- **C89**: declare locals at top of each block; no `//` comments.
-- `describe` state persists across `it`s unless reset in `before`.
-- `before`/`after` are one-time, not per-test — use `before_each`/`after_each`.
-- Runner string must be exactly `all`/`passing`/`failing`/`skipped`, else nothing runs.
-- Failures auto-report `__FILE__:__LINE__`.
+- `em test` wraps `crystal spec`.
+- `crystal spec` runs everything under `spec/`.
+- `crystal spec spec/foo_spec.cr` runs a single file.
+- `crystal spec -e "pattern"` / `--tag focus` to filter examples.
