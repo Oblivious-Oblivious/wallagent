@@ -17,6 +17,8 @@ These override everything else:
 4. **Touch only what you must.** Every changed line must trace to the user's
    request.
 5. **NO committing from an agent!!** (human commits only).
+6. **Do not write comments** unless they are javadoc style comments.  Even
+   in that case, only write them if the project looks like a library not an app.
 
 ## 1. Think Before Coding
 
@@ -117,10 +119,14 @@ implementation rather than after mistakes.
 
 ### Code Style
 
+- Avoid manual types AT ALL COSTS.  Only type when necessary, let
+  type inference do the work.
 - Run `em lint` to format and lint documents using ameba.
 - Prefer the standard library over adding dependencies.
 - Keep Crystal code style local: 2-space indent, final newline, LF,
   trimmed trailing whitespace.
+- When creating/extending classes, private methods are first, then
+  initialize method, then protected, then public.
 - Max 80 chars/line. Follow existing script style.
 - Crystal statements end with semicolons. Match surrounding files.
 - Add focused tests for real behavior changes when practical.
@@ -131,6 +137,13 @@ implementation rather than after mistakes.
 - Framework: Crystal's built-in `spec`.
 - Spec files live in `spec/` and end in `.spec.cr`.
 - Run with `em test` (uses `crystal spec`).
+
+### Running Tests
+
+- `em test` wraps `crystal spec`.
+- `crystal spec` runs everything under `spec/`.
+- `crystal spec spec/foo_spec.cr` runs a single file.
+- `crystal spec -e "pattern"` / `--tag focus` to filter examples.
 
 ### Performance
 
@@ -148,14 +161,12 @@ Source: https://crystal-lang.org/reference/1.20/guides/performance.html
 - Use `struct` for small immutable value objects when appropriate, but remember
   structs are passed by value.
 - Be careful with string indexing: Crystal strings are UTF-8, so `str[i]` and
-  `str.size` can be costly. Prefer `each_char`, `each_byte`,
-  `each_codepoint`, or `Char::Reader`.
-- General rule: reduce allocations, stream into buffers/IOs, use Crystal’s
+  `str.size` can be costly. Prefer `each_char`, `each_byte`, `each_codepoint`,
+  or `Char::Reader`.
+- General rule: reduce allocations, stream into buffers/IOs, use Crystal's
   iteration APIs, and verify every performance change with profiling.
 
 ### Concurrency
-
-## Crystal Concurrency
 
 - Crystal concurrency is based on **fibers** (lightweight user-space tasks),
   not OS threads.
