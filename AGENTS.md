@@ -40,9 +40,6 @@ Rules:
 - Question complex requests: "Do you actually need X, or does Y cover it?"
 - Pick the edge-case-correct option when two stdlib approaches are the same
   size, lazy means less code, not the flimsier algorithm.
-- Mark intentional simplifications with a `ponytail:` comment. If the shortcut
-  has a known ceiling (global lock, O(n²) scan, naive heuristic), the comment
-  names the ceiling and the upgrade path.
 
 Not lazy about: input validation at trust boundaries, error handling that
 prevents data loss, security, accessibility, anything explicitly requested.
