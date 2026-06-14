@@ -1,37 +1,35 @@
 {
   "$schema": "https://raw.githubusercontent.com/Oblivious-Oblivious/Emeralds/master/schema/em.schema.json",
-  "author": "atha",
+  "author": "",
   "name": "wallagent",
-  "template": "crystal",
+  "template": "c",
   "version": "0.0.1",
   "license": "mit",
   "locignore": {
     "extensions": [],
-    "directories": ["lib", ".opencode", ".claude"]
+    "directories": ["libs", ".opencode", ".claude"]
   },
   "lintignore": {
     "extensions": [],
-    "directories": ["lib"]
+    "directories": ["libs"]
   },
-  "scripts": {
-    "shards": "shards",
-    "docs": "crystal docs src/*.cr",
-    "ameba": "shards build ameba -Dpreview_mt"
-  },
+  "scripts": {},
   "compile-flags": {
     "darwin": {
-      "debug": ["shards", "build"],
-      "release": ["shards", "build", "-Dpreview_mt", "--release", "--no-debug"]
+      "debug": ["clang", "-O2", "-std=c89", "-g", "-fsanitize=address", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pedantic-errors", "-Wpedantic"],
+      "release": ["clang", "-O2", "-std=c89"]
     },
     "linux": {
-      "debug": ["shards", "build"],
-      "release": ["shards", "build", "-Dpreview_mt", "--release", "--no-debug"]
+      "debug": ["gcc", "-O2", "-std=c89", "-g", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pedantic-errors", "-Wpedantic"],
+      "release": ["gcc", "-O2", "-std=c89"]
     },
     "win32": {
-      "debug": ["shards", "build"],
-      "release": ["shards", "build", "-Dpreview_mt", "--release", "--no-debug"]
+      "debug": ["gcc", "-O2", "-std=c89", "-g", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pedantic-errors", "-Wpedantic"],
+      "release": ["gcc", "-O2", "-std=c89"]
     }
   },
   "dependencies": {},
-  "dev-dependencies": {}
+  "dev-dependencies": {
+    "https://github.com/Oblivious-Oblivious/cSpec": "latest"
+  }
 }

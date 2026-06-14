@@ -94,9 +94,8 @@ implementation rather than after mistakes.
 
 ### Stack
 
-- Crystal project managed by Emeralds (`em` CLI) on top of Shards.
-- `shard.yml` is the source of truth for targets and dependencies.
-- `em.json` wraps it and delegates to `shards`/`crystal`.
+- C project managed by Emeralds (`em` CLI).
+- Compiler config comes from `em.json`.
 
 ### Commands
 
@@ -105,79 +104,121 @@ implementation rather than after mistakes.
 - Examples:
   - `em build [app | lib] [debug | release]` — build the project.
   - `em test` — run tests.
-  - `em install` — fetch dependencies into `lib/`.
-  - `em add <name>` — scaffold a new module (source + spec).
+  - `em install` — fetch dependencies into `libs/`.
+  - `em add <name>` — scaffold a new module (source + header).
 
 ### Layout
 
-- `src/` — source files (`.cr`).
-- `spec/` — spec files (`*.spec.cr`).
-- `lib/` — installed shards (gitignored).
-- `bin/` — compiled binaries (gitignored).
-- `shard.yml` — targets and dependencies.
-- `em.json` — Emeralds wrapper configuration.
+- `src/` — source modules (`.c` and `.h` files).
+- `spec/` — cSpec test files.
+- `libs/` — installed dependencies (gitignored).
+- `export/` — dependency public headers.
+- `em.json` — project configuration (single source of truth).
 
-### Code Style
+### Config Format
 
-- Avoid manual types AT ALL COSTS.  Only type when necessary, let
-  type inference do the work.
-- Run `em lint` to format and lint documents using ameba.
-- Prefer the standard library over adding dependencies.
-- Keep Crystal code style local: 2-space indent, final newline, LF,
-  trimmed trailing whitespace.
-- When creating/extending classes, private methods are first, then
-  initialize method, then protected, then public.
-- Max 80 chars/line. Follow existing script style.
-- Crystal statements end with semicolons. Match surrounding files.
-- Add focused tests for real behavior changes when practical.
-- Single-statement lambdas: `->`; multi: `do...end`.
+- Compile flags per platform: `compile-flags.darwin` / `linux` / `win32`.
+- Each platform has `debug` and `release` profiles.
+- Production dependencies: `dependencies`.
+- Development dependencies: `dev-dependencies`.
 
 ### Testing
 
-- Framework: Crystal's built-in `spec`.
-- Spec files live in `spec/` and end in `.spec.cr`.
-- Run with `em test` (uses `crystal spec`).
+- Framework: cSpec.
+- Spec files live in `spec/`.
+- Include path: `libs/cSpec/export/cSpec.h`.
+- Suite runner pattern: `cspec_run_suite(...)`.
 
-### Running Tests
+### Code Style
 
-- `em test` wraps `crystal spec`.
-- `crystal spec` runs everything under `spec/`.
-- `crystal spec spec/foo_spec.cr` runs a single file.
-- `crystal spec -e "pattern"` / `--tag focus` to filter examples.
+- Favor C89 compatibility by default; only use newer C features when
+  explicitly told to.
+- `.clang-format` is authoritative. Don't override it.
+- `.clangd` provides editor intelligence.
 
-### Performance
+# cSpec — Usage Reference
 
-Source: https://crystal-lang.org/reference/1.20/guides/performance.html
+Single-header, C89, compile-time TDD/BDD unit testing (RSpec-style). No linking,
+no runtime deps — just `#include "libs/cSpec/export/cSpec.h"`.
 
-- Avoid unnecessary heap allocations; they are slower and increase GC pressure.
-- Prefer writing directly to `IO` instead of building intermediate strings.
-  Implement `to_s(io)` rather than `to_s` for custom types.
-- Use string interpolation over manual string concatenation.
-- Use `String.build` for efficient string construction instead of allocating an
-  `IO::Memory` yourself.
-- Avoid repeated temporary objects in hot paths, especially inside loops.
-  Prefer tuples for fixed literal collections, and use iterator methods like
-  `Hash#each_key` instead of allocating arrays via `Hash#keys`.
-- Use `struct` for small immutable value objects when appropriate, but remember
-  structs are passed by value.
-- Be careful with string indexing: Crystal strings are UTF-8, so `str[i]` and
-  `str.size` can be costly. Prefer `each_char`, `each_byte`, `each_codepoint`,
-  or `Char::Reader`.
-- General rule: reduce allocations, stream into buffers/IOs, use Crystal's
-  iteration APIs, and verify every performance change with profiling.
+Convention: one module per `<name>.module.spec.h`, plus one `*.spec.c` runner
+that includes them. Build/run with `em test`.
 
-### Concurrency
+## Example
 
-- Crystal concurrency is based on **fibers** (lightweight user-space tasks),
-  not OS threads.
-- Create concurrent work with `spawn`.
-- Prefer **message passing via `Channel`** over shared mutable state.
-- Fibers communicate using channels (`send` / `receive`) in a CSP-style model
-  similar to Go.
-- Fiber scheduling is cooperative; blocking operations such as I/O, channel
-  operations, and `sleep` yield execution.
-- Use `select` to wait on multiple channel operations.
-- Design concurrent systems as independent fibers communicating through channels.
-- Avoid shared mutable state whenever possible.
-- If shared state is necessary in parallel execution contexts, use
-  synchronization primitives (`Mutex`, atomics, etc.).
+```c
+/* stack.module.spec.h */
+#include "../src/cSpec.h"
+
+module(T_stack, {              /* defines void T_stack(void) */
+  before_each(&setup);         /* void(void) ptr, runs around every `it` */
+  after_each(&defer);
+
+  describe("stack", {
+    int x;
+    before({ x = 99; });       /* inlined ONCE here, not per-test */
+
+    it("pops what it pushed", {
+      push(s, x);
+      assert_that_int(pop(s) equals to x);
+    });
+
+    after({ /* one-time teardown */ });
+  });
+})
+
+/* runner.spec.c */
+int main(void) {
+  cspec_run_suite("all", {     /* "all" | "passing" | "failing" | "skipped" */
+    T_stack();                 /* call each module */
+  });
+}
+```
+
+`cspec_run_suite(type, {...})`: all tests run; `type` only filters what prints.
+
+## Structure
+
+- `module(name, {...})` — top-level container; defines callable `name`.
+- `describe("text", {...})` / `context(...)` — groups (aliases); nest freely.
+- `it("text", {...})` — one test; independent; any failed assert fails it.
+
+## Setup & teardown
+
+- `before({...})` / `after({...})` — inlined **once** where written (block-level).
+- `before_each(&fn)` / `after_each(&fn)` — `void fn(void)` run **around every `it`**.
+
+## Assertions
+
+```c
+assert_that(expr);                  /* fail if false; nassert_that = fail if true */
+assert_that(len is 0);              /* sugar: is -> ==,  isnot -> != */
+fail("message");                    /* always fails */
+
+assert_that_int(got equals to 2);   /* typed equality; nassert_that_int negates */
+assert_that_charptr(s equals to ""); /* charptr compares contents */
+assert_that_int_array(got equals to want with array_size 5);
+```
+
+Typed `<type>` suffixes (each has 4 forms: `assert_that_<t>`, `nassert_that_<t>`,
+`..._array`, `nassert..._array`):
+`char`, `unsigned_char`, `short`, `unsigned_short`, `int`, `unsigned_int`,
+`long`, `unsigned_long`, `long_long`, `unsigned_long_long`, `size_t`,
+`ptrdiff_t`, `void_ptr`, `float`, `double`, `long_double`, `charptr`.
+
+Sugar words: `is`=`==`, `isnot`=`!=`, `equals`=`,`, `array_size`=`,`,
+`to`/`with`=nothing. So `assert_that_int(a equals to b)` is `assert_that_int(a, b)`.
+Floats compare within `1E-12`; `void_ptr` compares addresses.
+
+## Skipping
+
+Prefix with `x` to skip (body not run, counts as skipped): `xmodule`,
+`xdescribe`, `xcontext`, `xit`. Shown only under `"all"`/`"skipped"`.
+
+## Gotchas
+
+- **C89**: declare locals at top of each block; no `//` comments.
+- `describe` state persists across `it`s unless reset in `before`.
+- `before`/`after` are one-time, not per-test — use `before_each`/`after_each`.
+- Runner string must be exactly `all`/`passing`/`failing`/`skipped`, else nothing runs.
+- Failures auto-report `__FILE__:__LINE__`.
