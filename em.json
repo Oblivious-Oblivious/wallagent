@@ -6,8 +6,8 @@
   "version": "0.0.1",
   "license": "mit",
   "locignore": {
-    "extensions": [],
-    "directories": ["libs", ".opencode", ".claude"]
+    "extensions": [".md"],
+    "directories": ["libs", ".opencode", ".claude", "em.json"]
   },
   "lintignore": {
     "extensions": [],
@@ -16,15 +16,49 @@
   "scripts": {},
   "compile-flags": {
     "darwin": {
-      "debug": ["clang", "-O2", "-std=c89", "-g", "-fsanitize=address", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pedantic-errors", "-Wpedantic"],
+      "debug": [
+        "clang",
+        "-O2",
+        "-std=c89",
+        "-g",
+        "-fsanitize=address",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-pedantic-errors",
+        "-Wpedantic"
+      ],
       "release": ["clang", "-O2", "-std=c89"]
     },
     "linux": {
-      "debug": ["gcc", "-O2", "-std=c89", "-g", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pedantic-errors", "-Wpedantic"],
+      "debug": [
+        "gcc",
+        "-O2",
+        "-std=c89",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-pedantic-errors",
+        "-Wpedantic"
+      ],
       "release": ["gcc", "-O2", "-std=c89"]
     },
     "win32": {
-      "debug": ["gcc", "-O2", "-std=c89", "-g", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pedantic-errors", "-Wpedantic"],
+      "debug": [
+        "gcc",
+        "-O2",
+        "-std=c89",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-pedantic-errors",
+        "-Wpedantic"
+      ],
       "release": ["gcc", "-O2", "-std=c89"]
     }
   },
