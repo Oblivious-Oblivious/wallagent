@@ -19,7 +19,7 @@
       "debug": [
         "clang",
         "-O2",
-        "-std=c89",
+        "-std=c99",
         "-g",
         "-fsanitize=address",
         "-Wall",
@@ -29,13 +29,13 @@
         "-pedantic-errors",
         "-Wpedantic"
       ],
-      "release": ["clang", "-O2", "-std=c89"]
+      "release": ["clang", "-O2", "-std=c99"]
     },
     "linux": {
       "debug": [
         "gcc",
         "-O2",
-        "-std=c89",
+        "-std=c99",
         "-g",
         "-Wall",
         "-Wextra",
@@ -44,13 +44,13 @@
         "-pedantic-errors",
         "-Wpedantic"
       ],
-      "release": ["gcc", "-O2", "-std=c89"]
+      "release": ["gcc", "-O2", "-std=c99"]
     },
     "win32": {
       "debug": [
         "gcc",
         "-O2",
-        "-std=c89",
+        "-std=c99",
         "-g",
         "-Wall",
         "-Wextra",
@@ -59,7 +59,7 @@
         "-pedantic-errors",
         "-Wpedantic"
       ],
-      "release": ["gcc", "-O2", "-std=c89"]
+      "release": ["gcc", "-O2", "-std=c99"]
     }
   },
   "dependencies": {},
