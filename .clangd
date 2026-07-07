@@ -1,7 +1,7 @@
 CompileFlags:
   Add:
     - "-xc"
-    - "-std=c2x"
+    - "-std=c23"
 
 Diagnostics:
-  Suppress: unused-includes
+  Suppress: [unused-includes, hicpp-use-nullptr]

@@ -1,0 +1,14 @@
+---
+Checks:
+  - '*'
+  - '-altera-unroll-loops'
+  - '-bugprone-multi-level-implicit-pointer-conversion'
+  - '-bugprone-reserved-identifier'
+  - '-cert-dcl37-c'
+  - '-cert-dcl51-cpp'
+  - '-llvm-header-guard'
+  - '-llvmlibc-restrict-system-libc-headers'
+  - '-misc-include-cleaner'
+  - '-modernize-use-nullptr'
+  - '-readability-function-cognitive-complexity'
+  - '-readability-identifier-length'
